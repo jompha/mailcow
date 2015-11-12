@@ -1,0 +1,22 @@
+#!/bin/bash
+PATH=/usr/local/bin:/usr/local/sbin:/sbin:/usr/sbin:/bin:/usr/bin:/usr/bin/X11
+
+greenb() { echo $(tput bold)$(tput setaf 2)${1}$(tput sgr0); }
+redb() { echo $(tput bold)$(tput setaf 1)${1}$(tput sgr0); }
+yellowb() { echo $(tput bold)$(tput setaf 3)${1}$(tput sgr0); }
+
+read -p "Old hostname: " oldHostname
+read -p "Old domain: " oldDomain
+read -p "New hostname: " newHostname
+read -p "New domain: " newDomain
+
+greenb "Changing the main hostname used by mailcow from ${oldHostname} to ${newHostname}"
+
+
+sed -i "s/${oldHostname}.${oldDomain}/${newHostname}.${newDomain}/g" /etc/postfix/* 2> /dev/null
+sed -i "s/${oldHostname}.${oldDomain}/${newHostname}.${newDomain}/g" /etc/dovecot/*
+sed -i "s/${oldHostname}.${oldDomain};/${newHostname}.${newDomain};/g" /etc/nginx/sites-available/mailcow
+sed -i "s/\"\${oldHostname}.${oldDomain}\"/\"${newHostname}.${newDomain}\"/g" /etc/apache2/sites-available/mailcow.conf
+sed -i "s/${oldHostname}/${newHostname}/g" /var/www/mail/autoconfig.xml
+sed -i "s/${oldHostname}.${oldDomain}/${newHostname}.${newDomain}/g" /var/www/zpush/backend/imap/config.php
+sed -i "s/${oldHostname}.${oldDomain}/${newHostname}.${newDomain}/g" /var/www/mail/rc/config/config.inc.php
