@@ -15,7 +15,7 @@ read -p "Old domain: " oldDomain
 read -p "New hostname: " newHostname
 read -p "New domain: " newDomain
 
-greenb "Changing the main hostname used by mailcow from ${oldHostname} to ${newHostname}"
+echo "$(greenb [INFO]) Changing the main hostname used by mailcow from ${oldHostname} to ${newHostname}"
 
 
 sed -i "s/${oldHostname}.${oldDomain}/${newHostname}.${newDomain}/g" /etc/postfix/* 2> /dev/null
@@ -35,11 +35,21 @@ if [[ ! -z $(openssl x509 -issuer -in /etc/ssl/mail/mail.crt | grep ${oldHostnam
 	cp /etc/ssl/mail/mail.crt /usr/local/share/ca-certificates/
 	update-ca-certificates
 else
-	redb "You need to change your SSL-certificate"
+	echo "$(redb [WARN]) You do not use a self-signed certificate. You need to change it manually"
 fi
 
 if [[ ! -f /etc/ssl/mail/dhparams.pem ]]; then
-	echo "$(textb [INFO]) - Generating 2048 bit DH parameters, this may take a while, please wait..."
+	echo "$(greenb [INFO]) - Generating 2048 bit DH parameters, this may take a while, please wait..."
 	rm /etc/ssl/mail/dhparams.pem
 	openssl dhparam -out /etc/ssl/mail/dhparams.pem 2048 2> /dev/null
 fi
+
+echo "$(greenb [INFO]) - Restarting services, this may take a few seconds..."
+for var in ${lsof -i:80 | awk '{print $1}' | sed -n 2p} dovecot postfix
+do
+	service $var stop
+	sleep 1.5
+	service $var start
+done
+
+echo "$(greenb [SUCCESS])"
