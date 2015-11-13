@@ -27,6 +27,7 @@ sed -i "s/${oldHostname}.${oldDomain}/${newHostname}.${newDomain}/g" /var/www/zp
 sed -i "s/${oldHostname}.${oldDomain}/${newHostname}.${newDomain}/g" /var/www/mail/rc/config/config.inc.php
 
 if [[ ! -z $(openssl x509 -issuer -in /etc/ssl/mail/mail.crt | grep ${oldHostname}.${oldDomain} ) ]]; then
+    GLOBIGNORE='*params.pem'
 	rm /etc/ssl/mail/* 2> /dev/null
 	echo "$(textb [INFO]) - Generating 2048 bit DH parameters, this may take a while, please wait..."
 	openssl dhparam -out /etc/ssl/mail/dhparams.pem 2048 2> /dev/null
@@ -36,12 +37,6 @@ if [[ ! -z $(openssl x509 -issuer -in /etc/ssl/mail/mail.crt | grep ${oldHostnam
 	update-ca-certificates
 else
 	echo "$(redb [WARN]) You do not use a self-signed certificate. You need to change it manually"
-fi
-
-if [[ ! -f /etc/ssl/mail/dhparams.pem ]]; then
-	echo "$(greenb [INFO]) - Generating 2048 bit DH parameters, this may take a while, please wait..."
-	rm /etc/ssl/mail/dhparams.pem
-	openssl dhparam -out /etc/ssl/mail/dhparams.pem 2048 2> /dev/null
 fi
 
 echo "$(greenb [INFO]) - Restarting services, this may take a few seconds..."
